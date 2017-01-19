@@ -110,6 +110,11 @@ typedef void (^FUIAuthResultCallback)(FIRUser *_Nullable user, NSError *_Nullabl
 - (FUIPasswordVerificationViewController *)passwordVerificationViewControllerForAuthUI:(FUIAuth *)authUI
                                                                                  email:(NSString *)email
                                                                          newCredential:(FIRAuthCredential *)newCredential;
+
+typedef void (^FIRAuthProviderAnonymousLinkActionCompletionBlock)(BOOL shouldLogin);
+- (void)authUI:(FUIAuth *)authUI linkAnonyousUserWithAuthCredential:(nullable FIRAuthCredential *)credential shouldLoginNewUserCallback: (nonnull FIRAuthProviderAnonymousLinkActionCompletionBlock)completion;
+
+
 @end
 
 /** @class FUIAuth
