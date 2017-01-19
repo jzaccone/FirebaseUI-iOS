@@ -157,43 +157,46 @@ static const CGFloat kButtonContainerBottomMargin = 56.0f;
 }
 
 - (void)signInWithProviderUI:(id<FUIAuthProvider>)providerUI {
-  [self incrementActivity];
-
-  // Sign out first to make sure sign in starts with a clean state.
-  [providerUI signOut];
-  [providerUI signInWithEmail:nil
-     presentingViewController:self
-                   completion:^(FIRAuthCredential *_Nullable credential,
-                                NSError *_Nullable error) {
-                     if (error) {
-                       [self decrementActivity];
-
-                       if (error.code == FUIAuthErrorCodeUserCancelledSignIn) {
-                         // User cancelled sign in, Do nothing.
-                         return;
-                       }
-
-                       [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                         [self.authUI invokeResultCallbackWithUser:nil error:error];
-                       }];
-                       return;
-                     }
-
-    [self.auth signInWithCredential:credential
-                         completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
-      if (error && error.code == FIRAuthErrorCodeEmailAlreadyInUse) {
-        NSString *email = error.userInfo[kErrorUserInfoEmailKey];
-        [self handleAccountLinkingForEmail:email newCredential:credential];
-        return;
-      }
-
-      [self decrementActivity];
-
-      [self.navigationController dismissViewControllerAnimated:YES completion:^{
-        [self.authUI invokeResultCallbackWithUser:user error:error];
-      }];
-    }];
-  }];
+    [self incrementActivity];
+    
+    // Sign out first to make sure sign in starts with a clean state.
+    [providerUI signOut];
+    [providerUI signInWithEmail:nil
+       presentingViewController:self
+                     completion:^(FIRAuthCredential *_Nullable credential,
+                                  NSError *_Nullable error) {
+                         if (error) {
+                             [self decrementActivity];
+                             
+                             if (error.code == FUIAuthErrorCodeUserCancelledSignIn) {
+                                 // User cancelled sign in, Do nothing.
+                                 return;
+                             }
+                             
+                             [self.navigationController dismissViewControllerAnimated:YES completion:^{
+                                 [self.authUI invokeResultCallbackWithUser:nil error:error];
+                             }];
+                             return;
+                         }
+                         
+                         [self.authUI invokeLinkAnonymousUserWithCredential:credential continueBlock:^{
+                             [self.auth signInWithCredential:credential
+                                                  completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
+                                                      if (error && error.code == FIRAuthErrorCodeEmailAlreadyInUse) {
+                                                          NSString *email = error.userInfo[kErrorUserInfoEmailKey];
+                                                          [self handleAccountLinkingForEmail:email newCredential:credential];
+                                                          return;
+                                                      }
+                                                      
+                                                      [self decrementActivity];
+                                                      
+                                                      [self.navigationController dismissViewControllerAnimated:YES completion:^{
+                                                          [self.authUI invokeResultCallbackWithUser:user error:error];
+                                                      }];
+                                                  }];
+                         }];
+                     }];
+    
 }
 
 - (void)handleAccountLinkingForEmail:(NSString *)email

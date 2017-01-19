@@ -96,33 +96,37 @@ static NSString *const kCellReuseIdentifier = @"cellReuseIdentifier";
   }
 
   [self incrementActivity];
-
-  [self.auth signInWithEmail:email
-                    password:password
-                  completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
-                    [self decrementActivity];
-
-                    if (error) {
-                      switch (error.code) {
-                        case FIRAuthErrorCodeWrongPassword:
-                          [self showAlertWithMessage:[FUIAuthStrings wrongPasswordError]];
-                          return;
-                        case FIRAuthErrorCodeUserNotFound:
-                          [self showAlertWithMessage:[FUIAuthStrings userNotFoundError]];
-                          return;
-                        case FIRAuthErrorCodeUserDisabled:
-                          [self showAlertWithMessage:[FUIAuthStrings accountDisabledError]];
-                          return;
-                        case FIRAuthErrorCodeTooManyRequests:
-                          [self showAlertWithMessage:[FUIAuthStrings signInTooManyTimesError]];
-                          return;
-                      }
-                    }
-                    
-                    [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                      [self.authUI invokeResultCallbackWithUser:user error:error];
-                    }];
-                  }];
+    
+  FIRAuthCredential *credential = [FIREmailPasswordAuthProvider credentialWithEmail:email
+                                                                           password:password];
+  [self.authUI invokeLinkAnonymousUserWithCredential:credential continueBlock:^{
+      [self.auth signInWithEmail:email
+                        password:password
+                      completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
+                          [self decrementActivity];
+                          
+                          if (error) {
+                              switch (error.code) {
+                                  case FIRAuthErrorCodeWrongPassword:
+                                      [self showAlertWithMessage:[FUIAuthStrings wrongPasswordError]];
+                                      return;
+                                  case FIRAuthErrorCodeUserNotFound:
+                                      [self showAlertWithMessage:[FUIAuthStrings userNotFoundError]];
+                                      return;
+                                  case FIRAuthErrorCodeUserDisabled:
+                                      [self showAlertWithMessage:[FUIAuthStrings accountDisabledError]];
+                                      return;
+                                  case FIRAuthErrorCodeTooManyRequests:
+                                      [self showAlertWithMessage:[FUIAuthStrings signInTooManyTimesError]];
+                                      return;
+                              }
+                          }
+                          
+                          [self.navigationController dismissViewControllerAnimated:YES completion:^{
+                              [self.authUI invokeResultCallbackWithUser:user error:error];
+                          }];
+                      }];
+  }];
 }
 
 - (void)signIn {

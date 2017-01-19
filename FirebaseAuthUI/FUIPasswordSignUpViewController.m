@@ -167,27 +167,31 @@ static const CGFloat kFooterTextViewHorizontalInset = 8.0f;
 
   [self incrementActivity];
 
-  [self.auth createUserWithEmail:email
-                        password:password
-                      completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
-    if (error) {
-      [self decrementActivity];
+    FIRAuthCredential *credential = [FIREmailPasswordAuthProvider credentialWithEmail:email
+                                                                             password:password];
+  [self.authUI invokeLinkAnonymousUserWithCredential:credential continueBlock:^{
+      [self.auth createUserWithEmail:email
+                            password:password
+                          completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
+        if (error) {
+          [self decrementActivity];
 
-      [self finishSignUpWithUser:nil error:error];
-      return;
-    }
+          [self finishSignUpWithUser:nil error:error];
+          return;
+        }
 
-    FIRUserProfileChangeRequest *request = [user profileChangeRequest];
-    request.displayName = username;
-    [request commitChangesWithCompletion:^(NSError *_Nullable error) {
-      [self decrementActivity];
+        FIRUserProfileChangeRequest *request = [user profileChangeRequest];
+        request.displayName = username;
+        [request commitChangesWithCompletion:^(NSError *_Nullable error) {
+          [self decrementActivity];
 
-      if (error) {
-        [self finishSignUpWithUser:nil error:error];
-        return;
-      }
-      [self finishSignUpWithUser:user error:nil];
-    }];
+          if (error) {
+            [self finishSignUpWithUser:nil error:error];
+            return;
+          }
+          [self finishSignUpWithUser:user error:nil];
+        }];
+      }];
   }];
 }
 

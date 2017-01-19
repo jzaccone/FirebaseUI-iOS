@@ -27,6 +27,8 @@ NS_ASSUME_NONNULL_BEGIN
  */
 - (void)invokeResultCallbackWithUser:(FIRUser *_Nullable)user error:(NSError *_Nullable)error;
 
+- (void)invokeLinkAnonymousUserWithCredential:(FIRAuthCredential * _Nullable)credential continueBlock:(void (^_Nullable)(void))continueBlock;
+
 @end
 
 NS_ASSUME_NONNULL_END

@@ -126,6 +126,21 @@ static const char kAuthAssociationKey;
   });
 }
 
+- (void)invokeLinkAnonymousUserWithCredential:(FIRAuthCredential * _Nullable)credential continueBlock:(void (^_Nullable)(void))continueBlock {
+    if (credential && [self.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)]) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [self.delegate authUI:self linkAnonyousUserWithAuthCredential:credential shouldLoginNewUserCallback:^(BOOL shouldLogin) {
+                if (shouldLogin) {
+                    continueBlock();
+                }
+            }];
+        });
+    }
+    else {
+        continueBlock();
+    }
+}
+
 #pragma mark - NSSecureCoding
 
 + (BOOL)supportsSecureCoding {
