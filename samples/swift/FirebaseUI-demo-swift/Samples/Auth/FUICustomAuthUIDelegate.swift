@@ -20,7 +20,7 @@ import FirebaseAuth
 
 class FUICustomAuthDelegate: NSObject, FUIAuthDelegate {
 
-  func authUI(_ authUI: FUIAuth, didSignInWith user: FIRUser?, error: Error?) {
+  func authUI(_ authUI: FUIAuth, didSignInWith user: User?, error: Error?) {
     guard let authError = error else { return }
 
     let errorCode = UInt((authError as NSError).code)
@@ -35,27 +35,44 @@ class FUICustomAuthDelegate: NSObject, FUIAuthDelegate {
     }
   }
 
-  func authPickerViewController(for authUI: FUIAuth) -> FUIAuthPickerViewController {
-    return FUICustomAuthPickerViewController(authUI: authUI)
+  func authPickerViewController(forAuthUI authUI: FUIAuth) -> FUIAuthPickerViewController {
+    return FUICustomAuthPickerViewController(nibName: "FUICustomAuthPickerViewController",
+                                             bundle: Bundle.main,
+                                             authUI: authUI)
   }
 
-  func emailEntryViewController(for authUI: FUIAuth) -> FUIEmailEntryViewController {
-    return FUICustomEmailEntryViewController(authUI: authUI)
+  func emailEntryViewController(forAuthUI authUI: FUIAuth) -> FUIEmailEntryViewController {
+    return FUICustomEmailEntryViewController(nibName: "FUICustomEmailEntryViewController",
+                                             bundle: Bundle.main,
+                                             authUI: authUI)
   }
 
-  func passwordRecoveryViewController(for authUI: FUIAuth, email: String) -> FUIPasswordRecoveryViewController {
-    return FUICustomPasswordRecoveryViewController(authUI: authUI, email: email)
+  func passwordRecoveryViewController(forAuthUI authUI: FUIAuth, email: String) -> FUIPasswordRecoveryViewController {
+    return FUICustomPasswordRecoveryViewController(nibName: "FUICustomPasswordRecoveryViewController",
+                                                   bundle: Bundle.main,
+                                                   authUI: authUI,
+                                                   email: email)
   }
 
-  func passwordSignInViewController(for authUI: FUIAuth, email: String) -> FUIPasswordSignInViewController {
-    return FUICustomPasswordSignInViewController(authUI: authUI, email: email)
+  func passwordSignInViewController(forAuthUI authUI: FUIAuth, email: String) -> FUIPasswordSignInViewController {
+    return FUICustomPasswordSignInViewController(nibName: "FUICustomPasswordSignInViewController",
+                                                 bundle: Bundle.main,
+                                                 authUI: authUI,
+                                                 email: email)
   }
 
-  func passwordSignUpViewController(for authUI: FUIAuth, email: String) -> FUIPasswordSignUpViewController {
-    return FUICustomPasswordSignUpViewController(authUI: authUI, email: email)
+  func passwordSignUpViewController(forAuthUI authUI: FUIAuth, email: String) -> FUIPasswordSignUpViewController {
+    return FUICustomPasswordSignUpViewController(nibName: "FUICustomPasswordSignUpViewController",
+                                                 bundle: Bundle.main,
+                                                 authUI: authUI,
+                                                 email: email)
   }
 
-  func passwordVerificationViewController(for authUI: FUIAuth, email: String, newCredential: FIRAuthCredential) -> FUIPasswordVerificationViewController {
-    return FUICustomPasswordVerificationViewController(authUI: authUI, email: email, newCredential: newCredential)
+  func passwordVerificationViewController(forAuthUI authUI: FUIAuth, email: String, newCredential: AuthCredential) -> FUIPasswordVerificationViewController {
+    return FUICustomPasswordVerificationViewController(nibName: "FUICustomPasswordVerificationViewController",
+                                                       bundle: Bundle.main,
+                                                       authUI: authUI,
+                                                       email: email,
+                                                       newCredential: newCredential)
   }
 }

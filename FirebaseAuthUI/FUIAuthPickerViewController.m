@@ -17,14 +17,12 @@
 #import "FUIAuthPickerViewController.h"
 
 #import <FirebaseAuth/FirebaseAuth.h>
-#import "FUIAuthProvider.h"
-#import "FUIAuthErrorUtils.h"
+#import "FUIAuthBaseViewController_Internal.h"
 #import "FUIAuthSignInButton.h"
 #import "FUIAuthStrings.h"
 #import "FUIAuthUtils.h"
 #import "FUIAuth_Internal.h"
 #import "FUIEmailEntryViewController.h"
-#import "FUIPasswordVerificationViewController.h"
 
 /** @var kErrorUserInfoEmailKey
     @brief The key for the email address in the userinfo dictionary of a sign in error.
@@ -62,8 +60,8 @@ static const CGFloat kButtonContainerBottomMargin = 56.0f;
 
 - (instancetype)initWithAuthUI:(FUIAuth *)authUI {
   return [self initWithNibName:NSStringFromClass([self class])
-                         bundle:[FUIAuthUtils frameworkBundle]
-                         authUI:authUI];
+                        bundle:[FUIAuthUtils bundleNamed:FUIAuthBundleName]
+                        authUI:authUI];
 }
 
 - (instancetype)initWithNibName:(NSString *)nibNameOrNil
@@ -74,7 +72,7 @@ static const CGFloat kButtonContainerBottomMargin = 56.0f;
                          bundle:nibBundleOrNil
                          authUI:authUI];
   if (self) {
-    self.title = [FUIAuthStrings authPickerTitle];
+    self.title = FUILocalizedString(kStr_AuthPickerTitle);
   }
   return self;
 }
@@ -117,8 +115,9 @@ static const CGFloat kButtonContainerBottomMargin = 56.0f;
         [UIColor colorWithRed:208.f/255.f green:2.f/255.f blue:27.f/255.f alpha:1.0];
     UIButton *emailButton =
         [[FUIAuthSignInButton alloc] initWithFrame:buttonFrame
-                                               image:[FUIAuthUtils imageNamed:@"ic_email"]
-                                                text:[FUIAuthStrings signInWithEmail]
+                                               image:[FUIAuthUtils imageNamed:@"ic_email"
+                                                                   fromBundle:FUIAuthBundleName]
+                                                text:FUILocalizedString(kStr_SignInWithEmail)
                                      backgroundColor:emailButtonBackgroundColor
                                            textColor:[UIColor whiteColor]];
     [emailButton addTarget:self
@@ -153,172 +152,7 @@ static const CGFloat kButtonContainerBottomMargin = 56.0f;
 }
 
 - (void)didTapSignInButton:(FUIAuthSignInButton *)button {
-  [self signInWithProviderUI:button.providerUI];
-}
-
-- (void)signInWithProviderUI:(id<FUIAuthProvider>)providerUI {
-    [self incrementActivity];
-    
-    // Sign out first to make sure sign in starts with a clean state.
-    [providerUI signOut];
-    [providerUI signInWithEmail:nil
-       presentingViewController:self
-                     completion:^(FIRAuthCredential *_Nullable credential,
-                                  NSError *_Nullable error) {
-                         if (error) {
-                             [self decrementActivity];
-                             
-                             if (error.code == FUIAuthErrorCodeUserCancelledSignIn) {
-                                 // User cancelled sign in, Do nothing.
-                                 return;
-                             }
-                             
-                             [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                                 [self.authUI invokeResultCallbackWithUser:nil error:error];
-                             }];
-                             return;
-                         }
-                         
-                         void (^signInBlock)(FIRAuthCredential *_Nullable credential) = ^void(FIRAuthCredential *_Nullable credential) {
-                             [self.auth signInWithCredential:credential
-                                                  completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
-                                                      if (error && error.code == FIRAuthErrorCodeEmailAlreadyInUse) {
-                                                          NSString *email = error.userInfo[kErrorUserInfoEmailKey];
-                                                          [self handleAccountLinkingForEmail:email newCredential:credential];
-                                                          return;
-                                                      }
-                                                      
-                                                      [self decrementActivity];
-                                                      
-                                                      [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                                                          [self.authUI invokeResultCallbackWithUser:user error:error];
-                                                      }];
-                                                  }];
-                         };
-                         
-                         if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)]) {
-                             [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:credential shouldLoginNewUserCallback:^(BOOL shouldLogin) {
-                                 if (shouldLogin) {
-                                     signInBlock(credential);
-                                 }
-                             }];
-                         }
-                         else {
-                             signInBlock(credential);
-                         }
-                         
-                     }];
-    
-}
-
-- (void)handleAccountLinkingForEmail:(NSString *)email
-                       newCredential:(FIRAuthCredential *)newCredential {
-  [self.auth fetchProvidersForEmail:email
-                         completion:^(NSArray<NSString *> *_Nullable providers,
-                                      NSError *_Nullable error) {
-    [self decrementActivity];
-
-    if (error) {
-      if (error.code == FIRAuthErrorCodeInvalidEmail) {
-        // This should never happen because the email address comes from the backend.
-        [self showAlertWithMessage:[FUIAuthStrings invalidEmailError]];
-      } else {
-        [self.navigationController dismissViewControllerAnimated:YES completion:^{
-          [self.authUI invokeResultCallbackWithUser:nil error:error];
-        }];
-      }
-      return;
-    }
-    if (!providers.count) {
-      // This should never happen because the user must be registered.
-      [self showAlertWithMessage:[FUIAuthStrings cannotAuthenticateError]];
-      return;
-    }
-    NSString *bestProviderID = providers[0];
-    if ([bestProviderID isEqual:FIREmailPasswordAuthProviderID]) {
-      // Password verification.
-      UIViewController *controller;
-      if ([self.authUI.delegate respondsToSelector:@selector(passwordVerificationViewControllerForAuthUI:email:newCredential:)]) {
-
-        controller = [self.authUI.delegate passwordVerificationViewControllerForAuthUI:self.authUI
-                                                                                 email:email
-                                                                         newCredential:newCredential];
-      } else {
-        controller = [[FUIPasswordVerificationViewController alloc] initWithAuthUI:self.authUI
-                                                                             email:email
-                                                                     newCredential:newCredential];
-
-      }
-      [self pushViewController:controller];
-      return;
-    }
-    id<FUIAuthProvider> bestProvider = [self providerWithID:bestProviderID];
-    if (!bestProvider) {
-      // Unsupported provider.
-      [self showAlertWithMessage:[FUIAuthStrings cannotAuthenticateError]];
-      return;
-    }
-
-    [self showSignInAlertWithEmail:email provider:bestProvider handler:^{
-      [self incrementActivity];
-
-      // Sign out first to make sure sign in starts with a clean state.
-      [bestProvider signOut];
-      [bestProvider signInWithEmail:email
-           presentingViewController:self
-                         completion:^(FIRAuthCredential *_Nullable credential,
-                                      NSError *_Nullable error) {
-                           if (error) {
-                             [self decrementActivity];
-
-                             if (error.code == FUIAuthErrorCodeUserCancelledSignIn) {
-                               // User cancelled sign in, Do nothing.
-                               return;
-                             }
-
-                             [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                               [self.authUI invokeResultCallbackWithUser:nil error:error];
-                             }];
-                             return;
-                           }
-
-        [self.auth signInWithCredential:credential completion:^(FIRUser *_Nullable user,
-                                                                NSError *_Nullable error) {
-          if (error) {
-            [self decrementActivity];
-
-            [self.navigationController dismissViewControllerAnimated:YES completion:^{
-              [self.authUI invokeResultCallbackWithUser:nil error:error];
-            }];
-            return;
-          }
-
-          [user linkWithCredential:newCredential completion:^(FIRUser *_Nullable user,
-                                                              NSError *_Nullable error) {
-            [self decrementActivity];
-
-            // Ignore any error (most likely caused by email mismatch) and treat the user as
-            // successfully signed in.
-            [self.navigationController dismissViewControllerAnimated:YES completion:^{
-              [self.authUI invokeResultCallbackWithUser:user error:nil];
-            }];
-          }];
-        }];
-      }];
-    }];
-  }];
-}
-
-#pragma mark - Utilities
-
-- (nullable id<FUIAuthProvider>)providerWithID:(NSString *)providerID {
-  NSArray<id<FUIAuthProvider>> *providers = self.authUI.providers;
-  for (id<FUIAuthProvider> provider in providers) {
-    if ([provider.providerID isEqual:providerID]) {
-      return provider;
-    }
-  }
-  return nil;
+  [self.authUI signInWithProviderUI:button.providerUI presentingViewController:self];
 }
 
 @end

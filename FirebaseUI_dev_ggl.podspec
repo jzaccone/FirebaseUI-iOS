@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = 'FirebaseGoogleAuthUI'
-  s.version      = '1.0.0'
+  s.version      = '4.1.0'
   s.summary      = 'Google UI binding library for Firebase.'
   s.homepage     = 'https://github.com/firebase/FirebaseUI-iOS'
   s.license      = { :type => 'Apache 2.0' }
@@ -13,8 +13,12 @@ Pod::Spec.new do |s|
   s.default_subspecs = 'Google'
 
   s.subspec 'Google' do |google|
-    google.source_files = "FirebaseGoogleAuthUI/*.{h,m}"
-    google.resources = "FirebaseGoogleAuthUI/{Resources,Strings}/*", "FirebaseGoogleAuthUI/*.xib"
+    google.source_files = "FirebaseGoogleAuthUI/**/*.{h,m}"
+    google.resource_bundle = {
+      'FirebaseGoogleAuthUI' => ['FirebaseGoogleAuthUI/Strings/**/*',
+                                 'FirebaseGoogleAuthUI/Resources/**/*',
+                                 'FirebaseGoogleAuthUI/**/*.xib']
+    }
     google.dependency 'FirebaseAuthUI/AuthBase'
     google.dependency 'GoogleSignIn', '~> 4.0'
   end

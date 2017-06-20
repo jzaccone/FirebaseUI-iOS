@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name         = 'FirebaseFacebookAuthUI'
-  s.version      = '1.0.0'
+  s.version      = '4.1.0'
   s.summary      = 'Facebook UI binding library for Firebase.'
   s.homepage     = 'https://github.com/firebase/FirebaseUI-iOS'
   s.license      = { :type => 'Apache 2.0' }
@@ -13,8 +13,12 @@ Pod::Spec.new do |s|
   s.default_subspecs = 'Facebook'
 
   s.subspec 'Facebook' do |facebook|
-    facebook.source_files = "FirebaseFacebookAuthUI/*.{h,m}"
-    facebook.resources = "FirebaseFacebookAuthUI/{Resources,Strings}/*", "FirebaseFacebookAuthUI/*.xib"
+    facebook.source_files = "FirebaseFacebookAuthUI/**/*.{h,m}"
+    facebook.resource_bundle = {
+      'FirebaseFacebookAuthUI' => ['FirebaseFacebookAuthUI/Strings/**/*',
+                                   'FirebaseFacebookAuthUI/Resources/**/*',
+                                   'FirebaseFacebookAuthUI/**/*.xib']
+    }
     facebook.dependency 'FirebaseAuthUI/AuthBase'
     facebook.dependency 'FBSDKLoginKit', '~> 4.0'
   end

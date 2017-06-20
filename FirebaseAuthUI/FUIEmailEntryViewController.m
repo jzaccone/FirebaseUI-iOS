@@ -17,6 +17,7 @@
 #import "FUIEmailEntryViewController.h"
 
 #import <FirebaseAuth/FirebaseAuth.h>
+#import "FUIAuthBaseViewController_Internal.h"
 #import "FUIAuthProvider.h"
 #import "FUIAuthStrings.h"
 #import "FUIAuthTableViewCell.h"
@@ -58,11 +59,16 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
       @brief The @c UITextField that user enters email address into.
    */
   UITextField *_emailField;
+  
+  /** @var _tableView
+      @brief The @c UITableView used to store all UI elements.
+   */
+  __weak IBOutlet UITableView *_tableView;
 }
 
 - (instancetype)initWithAuthUI:(FUIAuth *)authUI {
   return [self initWithNibName:NSStringFromClass([self class])
-                        bundle:[FUIAuthUtils frameworkBundle]
+                        bundle:[FUIAuthUtils bundleNamed:FUIAuthBundleName]
                         authUI:authUI];
 }
 
@@ -74,7 +80,7 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
                          bundle:nibBundleOrNil
                          authUI:authUI];
   if (self) {
-    self.title = [FUIAuthStrings signInWithEmail];
+    self.title = FUILocalizedString(kStr_SignInWithEmail);
   }
   return self;
 }
@@ -83,12 +89,13 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
   [super viewDidLoad];
 
   UIBarButtonItem *nextButtonItem =
-      [[UIBarButtonItem alloc] initWithTitle:[FUIAuthStrings next]
-                                       style:UIBarButtonItemStylePlain
-                                      target:self
-                                      action:@selector(next)];
+      [FUIAuthBaseViewController barItemWithTitle:FUILocalizedString(kStr_Next)
+                                           target:self
+                                           action:@selector(next)];
   nextButtonItem.accessibilityIdentifier = kNextButtonAccessibilityID;
   self.navigationItem.rightBarButtonItem = nextButtonItem;
+
+  [self enableDynamicCellHeightForTableView:_tableView];
 }
 
 - (void)viewWillAppear:(BOOL)animated {
@@ -111,7 +118,7 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
 
 - (void)onNext:(NSString *)emailText {
   if (![[self class] isValidEmail:emailText]) {
-    [self showAlertWithMessage:[FUIAuthStrings invalidEmailError]];
+    [self showAlertWithMessage:FUILocalizedString(kStr_InvalidEmailError)];
     return;
   }
 
@@ -124,7 +131,7 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
 
     if (error) {
       if (error.code == FIRAuthErrorCodeInvalidEmail) {
-        [self showAlertWithMessage:[FUIAuthStrings invalidEmailError]];
+        [self showAlertWithMessage:FUILocalizedString(kStr_InvalidEmailError)];
       } else {
         [self.navigationController dismissViewControllerAnimated:YES completion:^{
           [self.authUI invokeResultCallbackWithUser:nil error:error];
@@ -136,12 +143,16 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
     id<FUIAuthProvider> provider = [self bestProviderFromProviderIDs:providers];
     if (provider) {
       NSString *email = emailText;
-      [self showSignInAlertWithEmail:email
-                            provider:provider
-                             handler:^{
+      [[self class] showSignInAlertWithEmail:email
+                                    provider:provider
+                    presentingViewController:self
+                               signinHandler:^{
         [self signInWithProvider:provider email:email];
+      }
+                               cancelHandler:^{
+        [self.authUI signOutWithError:nil];
       }];
-    } else if ([providers containsObject:FIREmailPasswordAuthProviderID]) {
+    } else if ([providers containsObject:FIREmailAuthProviderID]) {
       UIViewController *controller;
       if ([self.authUI.delegate respondsToSelector:@selector(passwordSignInViewControllerForAuthUI:email:)]) {
         controller = [self.authUI.delegate passwordSignInViewControllerForAuthUI:self.authUI
@@ -154,7 +165,7 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
     } else {
       if (providers.count) {
         // There's some unsupported providers, surface the error to the user.
-        [self showAlertWithMessage:[FUIAuthStrings cannotAuthenticateError]];
+        [self showAlertWithMessage:FUILocalizedString(kStr_CannotAuthenticateError)];
       } else {
         // New user.
         UIViewController *controller;
@@ -190,20 +201,20 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
   FUIAuthTableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:kCellReuseIdentifier];
   if (!cell) {
     UINib *cellNib = [UINib nibWithNibName:NSStringFromClass([FUIAuthTableViewCell class])
-                                    bundle:[FUIAuthUtils frameworkBundle]];
+                                    bundle:[FUIAuthUtils bundleNamed:FUIAuthBundleName]];
     [tableView registerNib:cellNib forCellReuseIdentifier:kCellReuseIdentifier];
     cell = [tableView dequeueReusableCellWithIdentifier:kCellReuseIdentifier];
   }
-  cell.label.text = [FUIAuthStrings email];
-  cell.textField.placeholder = [FUIAuthStrings enterYourEmail];
+  cell.label.text = FUILocalizedString(kStr_Email);
+  cell.textField.placeholder = FUILocalizedString(kStr_EnterYourEmail);
   cell.textField.delegate = self;
   cell.accessibilityIdentifier = kEmailCellAccessibilityID;
   _emailField = cell.textField;
-  _emailField.secureTextEntry = NO;
-  _emailField.autocorrectionType = UITextAutocorrectionTypeNo;
-  _emailField.autocapitalizationType = UITextAutocapitalizationTypeNone;
-  _emailField.returnKeyType = UIReturnKeyNext;
-  _emailField.keyboardType = UIKeyboardTypeEmailAddress;
+  cell.textField.secureTextEntry = NO;
+  cell.textField.autocorrectionType = UITextAutocorrectionTypeNo;
+  cell.textField.autocapitalizationType = UITextAutocapitalizationTypeNone;
+  cell.textField.returnKeyType = UIReturnKeyNext;
+  cell.textField.keyboardType = UIKeyboardTypeEmailAddress;
   [cell.textField addTarget:self
                      action:@selector(textFieldDidChange)
            forControlEvents:UIControlEventEditingChanged];
@@ -247,24 +258,50 @@ static NSString *const kNextButtonAccessibilityID = @"NextButtonAccessibilityID"
   [provider signInWithEmail:email
    presentingViewController:self
                  completion:^(FIRAuthCredential *_Nullable credential,
-                              NSError *_Nullable error) {
-                   if (error) {
-                     [self decrementActivity];
+                              NSError *_Nullable error,
+                              _Nullable FIRAuthResultCallback result) {
+    [self decrementActivity];
+                     
+    if (error) {
+      if (result) {
+        result(nil, error);
+      }
 
-                     [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                       [self.authUI invokeResultCallbackWithUser:nil error:error];
-                     }];
-                     return;
-                   }
+      [self.navigationController dismissViewControllerAnimated:YES completion:^{
+        [self.authUI invokeResultCallbackWithUser:nil error:error];
+      }];
+      return;
+    }
 
-                   [self.auth signInWithCredential:credential
-                                        completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
-                                          [self decrementActivity];
-                                          
-                                          [self.navigationController dismissViewControllerAnimated:YES completion:^{
-                                            [self.authUI invokeResultCallbackWithUser:user error:error];
-                                          }];
-                                        }];
-                 }];
+    void (^signInBlock)(FIRAuthCredential *_Nullable credential) = ^void(FIRAuthCredential *_Nullable credential) {
+        [self incrementActivity];
+        [self.auth signInWithCredential:credential
+                            completion:^(FIRUser *_Nullable user, NSError *_Nullable error) {
+          [self decrementActivity];
+          if (result) {
+            result(user, error);
+          }
+
+          if (error) {
+            [self.authUI invokeResultCallbackWithUser:nil error:error];
+          } else {
+            [self.navigationController dismissViewControllerAnimated:YES completion:^{
+              [self.authUI invokeResultCallbackWithUser:user error:error];
+            }];
+          }
+        }];
+    };
+                     
+     if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)] && credential != nil) {
+         [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:credential shouldLoginNewUserCallback:^(BOOL shouldLogin) {
+             if (shouldLogin) {
+                 signInBlock(credential);
+             }
+         }];
+     }
+     else {
+         signInBlock(credential);
+     }
+ }];
 }
 @end

@@ -50,6 +50,14 @@
   return self;
 }
 
+- (NSArray<FIRDataSnapshot *> *)indexes {
+  return self.array.indexes;
+}
+
+- (FIRDataSnapshot *)snapshotAtIndex:(NSInteger)index {
+  return [self.array objectAtIndex:index];
+}
+
 #pragma mark - FUIIndexArrayDelegate
 
 - (void)array:(FUIIndexArray *)array
@@ -123,11 +131,11 @@ didLoadObject:(FIRDataSnapshot *)object
 @implementation UICollectionView (FUIIndexCollectionViewDataSource)
 
 - (FUIIndexCollectionViewDataSource *)bindToIndexedQuery:(FIRDatabaseQuery *)index
-                                                         data:(FIRDatabaseReference *)data
-                                                     delegate:(id<FUIIndexCollectionViewDataSourceDelegate>)delegate
-                                                 populateCell:(UICollectionViewCell *(^)(UICollectionView *,
-                                                                                         NSIndexPath *,
-                                                                                         FIRDataSnapshot *))populateCell {
+                                                    data:(FIRDatabaseReference *)data
+                                                delegate:(id<FUIIndexCollectionViewDataSourceDelegate>)delegate
+                                            populateCell:(UICollectionViewCell *(^)(UICollectionView *,
+                                                                                    NSIndexPath *,
+                                                                                    FIRDataSnapshot *))populateCell {
   FUIIndexCollectionViewDataSource *dataSource =
     [[FUIIndexCollectionViewDataSource alloc] initWithIndex:index
                                                             data:data
