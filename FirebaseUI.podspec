@@ -3,7 +3,7 @@ Pod::Spec.new do |s|
   s.version      = '4.2.0'
   s.summary      = 'UI binding libraries for Firebase.'
   s.homepage     = 'https://github.com/jzaccone/FirebaseUI-iOS'
-  s.license      = { :type => 'Apache 2.0', :http => 'LICENSE' }
+  s.license      = { :type => 'Apache 2.0', :file => 'LICENSE' }
   s.source       = { :git => 'https://github.com/jzaccone/FirebaseUI-iOS.git' }
   s.author       = 'Firebase'
   s.platform = :ios
