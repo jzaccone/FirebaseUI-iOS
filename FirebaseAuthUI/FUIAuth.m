@@ -182,7 +182,10 @@ static NSString *const kErrorUserInfoEmailKey = @"FIRAuthErrorUserInfoEmailKey";
        [self.delegate authUI:self linkAnonyousUserWithAuthCredential:credential shouldLoginNewUserCallback:^(BOOL shouldLogin) {
            if (shouldLogin) {
                signInBlock(credential);
+           } else if (presentingViewController.presentingViewController) {
+              [presentingViewController dismissViewControllerAnimated:YES completion:nil];
            }
+           
        }];
    }
    else {
