@@ -210,7 +210,10 @@ static const CGFloat kFooterTextViewHorizontalInset = 8.0f;
         [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:credential displayName:username shouldLoginNewUserCallback:^(BOOL shouldLogin) {
             if (shouldLogin) {
                 signInBlock(credential);
+            } else {
+                [self.navigationController dismissViewControllerAnimated:YES completion:nil];
             }
+
         }];
     }
     else {
