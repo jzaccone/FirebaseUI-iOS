@@ -140,7 +140,7 @@ static NSString *const kCellReuseIdentifier = @"cellReuseIdentifier";
     
     FIRAuthCredential *credential = [FIREmailAuthProvider credentialWithEmail:email password:password];
     if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)] && credential != nil) {
-        [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:credential shouldLoginNewUserCallback:^(BOOL shouldLogin) {
+        [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:credential displayName:nil shouldLoginNewUserCallback:^(BOOL shouldLogin) {
             if (shouldLogin) {
                 signInBlock(credential);
             }

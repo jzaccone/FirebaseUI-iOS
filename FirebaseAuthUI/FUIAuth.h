@@ -125,7 +125,7 @@ typedef void (^FUIAuthResultCallback)(FIRUser *_Nullable user, NSError *_Nullabl
                                                                          newCredential:(FIRAuthCredential *)newCredential;
 
 typedef void (^FIRAuthProviderAnonymousLinkActionCompletionBlock)(BOOL shouldLogin);
-- (void)authUI:(FUIAuth *)authUI linkAnonyousUserWithAuthCredential:(nonnull FIRAuthCredential *)credential shouldLoginNewUserCallback: (nonnull FIRAuthProviderAnonymousLinkActionCompletionBlock)completion;
+- (void)authUI:(FUIAuth *)authUI linkAnonyousUserWithAuthCredential:(nonnull FIRAuthCredential *)credential displayName:(NSString*)displayName shouldLoginNewUserCallback: (nonnull FIRAuthProviderAnonymousLinkActionCompletionBlock)completion;
 
 
 @end
