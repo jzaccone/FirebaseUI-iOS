@@ -178,7 +178,7 @@ static NSString *const kErrorUserInfoEmailKey = @"FIRAuthErrorUserInfoEmailKey";
         }];
     };
                        
-   if ([self.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)] && credential != nil) {
+   if ([self.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:displayName:shouldLoginNewUserCallback:)] && credential != nil) {
        [self.delegate authUI:self linkAnonyousUserWithAuthCredential:credential displayName:nil shouldLoginNewUserCallback:^(BOOL shouldLogin) {
            if (shouldLogin) {
                signInBlock(credential);

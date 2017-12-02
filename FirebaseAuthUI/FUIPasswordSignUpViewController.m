@@ -206,7 +206,7 @@ static const CGFloat kFooterTextViewHorizontalInset = 8.0f;
     };
     
     FIRAuthCredential *credential = [FIREmailAuthProvider credentialWithEmail:email password:password];
-    if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)] && credential != nil) {
+    if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:displayName:shouldLoginNewUserCallback:)] && credential != nil) {
         [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:credential displayName:username shouldLoginNewUserCallback:^(BOOL shouldLogin) {
             if (shouldLogin) {
                 signInBlock(credential);

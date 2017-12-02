@@ -163,7 +163,7 @@ static NSString *const kCellReuseIdentifier = @"cellReuseIdentifier";
                       }];
     };
     
-    if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:shouldLoginNewUserCallback:)] && _newCredential != nil) {
+    if ([self.authUI.delegate respondsToSelector:@selector(authUI:linkAnonyousUserWithAuthCredential:displayName:shouldLoginNewUserCallback:)] && _newCredential != nil) {
         [self.authUI.delegate authUI:self.authUI linkAnonyousUserWithAuthCredential:_newCredential displayName:nil shouldLoginNewUserCallback:^(BOOL shouldLogin) {
             if (shouldLogin) {
                 signInBlock(_newCredential);
