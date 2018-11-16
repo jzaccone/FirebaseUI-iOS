@@ -27,20 +27,20 @@ Pod::Spec.new do |s|
   s.subspec 'Database' do |database|
     database.platform = :ios, '8.0'
     database.vendored_frameworks = ["FirebaseUIFrameworks/FirebaseDatabaseUI/Frameworks/FirebaseDatabaseUI.framework"]
-    database.dependency 'Firebase/Database', '~> 4.0'
+    database.dependency 'Firebase/Database'
   end
 
   s.subspec 'Storage' do |storage|
     storage.platform = :ios, '8.0'
     storage.vendored_frameworks = ["FirebaseUIFrameworks/FirebaseStorageUI/Frameworks/FirebaseStorageUI.framework"]
-    storage.dependency 'Firebase/Storage', '~> 4.0'
+    storage.dependency 'Firebase/Storage'
     storage.dependency 'SDWebImage', '~> 4.0'
   end
 
   s.subspec 'Auth' do |auth|
     auth.platform = :ios, '8.0'
     auth.vendored_frameworks = ["FirebaseUIFrameworks/FirebaseAuthUI/Frameworks/FirebaseAuthUI.framework"]
-    auth.dependency 'Firebase/Auth', '~> 4.0'
+    auth.dependency 'Firebase/Auth'
     auth.resource_bundle = {
       'FirebaseAuthUI' => ['FirebaseUIFrameworks/FirebaseAuthUI/Frameworks/FirebaseAuthUI.framework/*.nib',
                            'FirebaseUIFrameworks/FirebaseAuthUI/Frameworks/FirebaseAuthUI.framework/*.lproj',
